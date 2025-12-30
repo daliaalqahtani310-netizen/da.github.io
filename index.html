@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_google_maps/flutter_google_maps.dart';
+
+void main() {
+  GoogleMap.init('YOUR_API_KEY'); // حطي مفتاح Google Maps هنا
+  runApp(MyApp());
+}
+
+class Place {
+  final String name;
+  final String category;
+  final String description;
+  final String imageUrl;
+  final double latitude;
+  final double longitude;
+
+  Place({
+    required this.name,
+    required this.category,
+    required this.description,
+    required this.imageUrl,
+    required this.latitude,
+    required this.longitude,
+  });
+}
+
+final List<Place> places = [
+  Place(
+    name: 'برج المملكة',
+    category: 'سياحة',
+    description: 'برج المملكة رمز من رموز الرياض ويتميز بتصميم معماري فريد ويحتوي على مول فخم.',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Kingdom_Centre_Riyadh.jpg',
+    latitude: 24.7111,
+    longitude: 46.6753,
+  ),
+  Place(
+    name: 'حديقة الملك عبدالله',
+    category: 'ترفيه',
+    description: 'أكبر الحدائق في الرياض، تحتوي على بحيرات وملاعب ومناطق للشواء.',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fd/King_Abdullah_Park_Riyadh.jpg',
+    latitude: 24.6900,
+    longitude: 46.6828,
+  ),
+  Place(
+    name: 'متحف الرياض الوطني',
+    category: 'سياحة',
+    description: 'يضم تاريخ وثقافة المملكة العربية السعودية بطريقة ممتعة وتعليمية.',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Museum_Riyadh.jpg',
+    latitude: 24.6877,
+    longitude: 46.7211,
+  ),
+];
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'دليل الرياض',
+      theme: ThemeData(
+        primarySwatch: Colors.green,
+        scaffoldBackgroundColor: Colors.green[50],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.green[700],
+          centerTitle: true,
+        ),
+      ),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  final categories = ['ترفيه', 'سياحة'];
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: categories.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('دليل الرياض', style: TextStyle(fontWeight: FontWeight.bold)),
+          bottom: TabBar(
+            tabs: categories.map((c) => Tab(text: c)).toList(),
+            indicatorColor: Colors.yellow,
+          ),
+        ),
+        body: TabBarView(
+          children: categories.map((category) {
+            final categoryPlaces = places.where((p) => p.category == category).toList();
+            return ListView.builder(
+              itemCount: categoryPlaces.length,
+              itemBuilder: (context, index) {
+                final place = categoryPlaces[index];
+                return Card(
+                  margin: EdgeInsets.all(12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 8,
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PlaceDetails(place: place)),
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          child: Image.network(place.imageUrl, height: 180, width: double.infinity, fit: BoxFit.cover),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(place.name, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                              SizedBox(height: 6),
+                              Text(place.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class PlaceDetails extends StatelessWidget {
+  final Place place;
+  PlaceDetails({required this.place});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(place.name)),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Image.network(place.imageUrl),
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(place.description, style: TextStyle(fontSize: 18)),
+            ),
+            SizedBox(
+              height: 300,
+              child: GoogleMap(
+                initialPosition: GeoCoord(place.latitude, place.longitude),
+                markers: {Marker(GeoCoord(place.latitude, place.longitude))},
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
